@@ -11,39 +11,20 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const ALLOWED_DOMAIN = process.env.ALLOWED_EMAIL_DOMAIN || "thapar.edu";
 
-// CORS configuration
-const corsOriginEnv = process.env.CORS_ORIGIN;
-let corsOptions = {};
-if (corsOriginEnv && corsOriginEnv !== "*") {
-  const allowedOrigins = corsOriginEnv.split(",").map((o) => o.trim());
-  corsOptions = {
-    origin: (origin, callback) => {
-      // allow requests with no origin (like mobile apps, curl, or same-origin)
-      if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes("*")) {
-        callback(null, true);
-      } else {
-        callback(new Error(`Origin ${origin} not allowed by CORS`));
-      }
-    },
-    methods: ["GET", "POST", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "x-admin-key"],
-    credentials: true,
-  };
-} else {
-  corsOptions = {
-    origin: "*",
-    methods: ["GET", "POST", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "x-admin-key"],
-  };
-}
+// Trust proxy for Render / Vercel / Cloudflare
+app.set("trust proxy", 1);
 
-app.use(cors(corsOptions));
+// Enable CORS for all origins and headers
+app.use(cors());
+app.options("*", cors());
+
 app.use(express.json({ limit: "100kb" }));
 
-// Rate limiter for submissions: 30 requests per 15 minutes per IP
+// Rate limiter for submissions: 60 requests per 15 minutes per IP
 const submitLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 30,
+  max: 60,
+  validate: { xForwardedForHeader: false },
   message: {
     error: "Too many feedback submissions from this IP. Please try again later.",
   },
@@ -207,6 +188,12 @@ app.get("/api/feedback/summary", requireAdminKey, async (req, res) => {
     console.error("[SERVER ERROR] Fetch summary:", err);
     return res.status(500).json({ error: "Internal server error." });
   }
+});
+
+// Global Error Handler
+app.use((err, req, res, next) => {
+  console.error("[UNHANDLED ERROR]", err);
+  res.status(500).json({ error: err.message || "Internal server error." });
 });
 
 // 404 Handler

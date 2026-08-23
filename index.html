@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PromptWars Feedback</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap');
+
+        :root {
+            --bg: #0a0f14;
+            --panel: #111922;
+            --panel-2: #0d141b;
+            --border: #1f2c38;
+            --text: #dce6ef;
+            --muted: #6b7d8f;
+            --amber: #e8a33d;
+            --amber-dim: #8a6526;
+            --green: #4fd1a5;
+            --red: #e8615d;
+            --mono: 'IBM Plex Mono', 'SFMono-Regular', Menlo, Consolas, monospace;
+            --sans: 'Inter', -apple-system, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--sans);
+            min-height: 100vh;
+            padding: 32px 16px;
+            background-image:
+                linear-gradient(rgba(232, 163, 61, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(232, 163, 61, 0.03) 1px, transparent 1px);
+            background-size: 28px 28px;
+        }
+
+        .wrap {
+            max-width: 620px;
+            margin: 0 auto;
+        }
+
+        .term {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+        }
+
+        .term-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            background: var(--panel-2);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .dot.r {
+            background: #e8615d;
+        }
+
+        .dot.y {
+            background: #e8c33d;
+        }
+
+        .dot.g {
+            background: #4fd1a5;
+        }
+
+        .term-path {
+            margin-left: 8px;
+            font-family: var(--mono);
+            font-size: 12.5px;
+            color: var(--muted);
+        }
+
+        .term-body {
+            padding: 28px 26px 30px;
+        }
+
+        .eyebrow {
+            font-family: var(--mono);
+            font-size: 12px;
+            letter-spacing: 0.08em;
+            color: var(--amber);
+            text-transform: uppercase;
+        }
+
+        .eyebrow::before {
+            content: "$ ";
+            color: var(--amber-dim);
+        }
+
+        h1 {
+            font-family: var(--mono);
+            font-size: 26px;
+            font-weight: 700;
+            margin: 10px 0 4px;
+            color: #fff;
+            letter-spacing: -0.01em;
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 10px;
+            height: 20px;
+            background: var(--amber);
+            margin-left: 4px;
+            vertical-align: -3px;
+            animation: blink 1.1s step-start infinite;
+        }
+
+        @keyframes blink {
+            50% {
+                opacity: 0;
+            }
+        }
+
+        .sub {
+            color: var(--muted);
+            font-size: 14px;
+            margin: 0 0 26px;
+            line-height: 1.5;
+        }
+
+        label {
+            display: block;
+            font-family: var(--mono);
+            font-size: 12px;
+            color: var(--muted);
+            margin: 20px 0 7px;
+            letter-spacing: 0.03em;
+        }
+
+        label .req {
+            color: var(--amber);
+        }
+
+        label .hint {
+            color: var(--muted);
+            font-family: var(--sans);
+            font-size: 11.5px;
+            letter-spacing: 0;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        textarea {
+            width: 100%;
+            background: var(--panel-2);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            font-family: var(--sans);
+            font-size: 14.5px;
+            padding: 11px 13px;
+            outline: none;
+            transition: border-color .15s, box-shadow .15s;
+        }
+
+        input::placeholder,
+        textarea::placeholder {
+            color: #3d4d5c;
+        }
+
+        input:focus,
+        textarea:focus {
+            border-color: var(--amber-dim);
+            box-shadow: 0 0 0 3px rgba(232, 163, 61, 0.12);
+        }
+
+        input.invalid {
+            border-color: var(--red);
+            box-shadow: 0 0 0 3px rgba(232, 97, 93, 0.12);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 90px;
+            font-family: var(--sans);
+            line-height: 1.5;
+        }
+
+        .field-err {
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--red);
+            margin-top: 6px;
+            display: none;
+        }
+
+        .scale-row {
+            display: flex;
+            gap: 6px;
+            flex-wrap: nowrap;
+        }
+
+        .bubble {
+            flex: 1;
+        }
+
+        .bubble input {
+            display: none;
+        }
+
+        .bubble label {
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 40px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--panel-2);
+            color: var(--muted);
+            font-family: var(--mono);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all .12s;
+        }
+
+        .bubble label:hover {
+            border-color: var(--amber-dim);
+            color: var(--text);
+        }
+
+        .bubble input:checked+label {
+            background: var(--amber);
+            border-color: var(--amber);
+            color: #1a1206;
+            font-weight: 700;
+        }
+
+        .scale-caps {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: var(--muted);
+            margin-top: 6px;
+            font-family: var(--mono);
+        }
+
+        .btn {
+            width: 100%;
+            margin-top: 28px;
+            padding: 13px;
+            border: none;
+            border-radius: 6px;
+            background: var(--amber);
+            color: #1a1206;
+            font-family: var(--mono);
+            font-weight: 700;
+            font-size: 14px;
+            letter-spacing: 0.02em;
+            cursor: pointer;
+            transition: filter .12s, transform .06s;
+        }
+
+        .btn:hover {
+            filter: brightness(1.08);
+        }
+
+        .btn:active {
+            transform: scale(0.99);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .err {
+            color: var(--red);
+            font-family: var(--mono);
+            font-size: 12px;
+            margin-top: 8px;
+            display: none;
+        }
+
+        .success {
+            display: none;
+            padding: 30px 26px;
+            text-align: center;
+        }
+
+        .success .tag {
+            display: inline-block;
+            font-family: var(--mono);
+            font-size: 12px;
+            color: var(--green);
+            border: 1px solid rgba(79, 209, 165, 0.35);
+            background: rgba(79, 209, 165, 0.08);
+            padding: 5px 12px;
+            border-radius: 20px;
+            letter-spacing: 0.06em;
+        }
+
+        .success h2 {
+            font-family: var(--mono);
+            color: #fff;
+            font-size: 20px;
+            margin: 14px 0 6px;
+        }
+
+        .success p {
+            color: var(--muted);
+            font-size: 13.5px;
+            margin: 0;
+        }
+
+        .success .code {
+            margin-top: 18px;
+            font-family: var(--mono);
+            font-size: 12px;
+            color: var(--muted);
+            background: var(--panel-2);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 10px;
+            word-break: break-all;
+        }
+
+        .foot {
+            text-align: center;
+            margin-top: 18px;
+        }
+
+        .foot button {
+            background: none;
+            border: none;
+            color: var(--muted);
+            font-family: var(--mono);
+            font-size: 11.5px;
+            cursor: pointer;
+            text-decoration: underline;
+            text-underline-offset: 3px;
+        }
+
+        .foot button:hover {
+            color: var(--amber);
+        }
+
+        /* organizer view */
+        .admin {
+            display: none;
+            margin-top: 16px;
+        }
+
+        .admin .term-body {
+            padding: 24px 26px;
+        }
+
+        .stat-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .stat {
+            flex: 1;
+            background: var(--panel-2);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 14px;
+            text-align: center;
+        }
+
+        .stat .n {
+            font-family: var(--mono);
+            font-size: 22px;
+            color: var(--amber);
+            font-weight: 700;
+        }
+
+        .stat .l {
+            font-family: var(--mono);
+            font-size: 10px;
+            color: var(--muted);
+            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .cloud {
+            line-height: 2.1;
+            padding: 6px 2px;
+        }
+
+        .cloud span {
+            color: var(--text);
+            margin-right: 10px;
+            font-family: var(--mono);
+        }
+
+        .resp-list {
+            margin-top: 18px;
+        }
+
+        .resp {
+            border-top: 1px solid var(--border);
+            padding: 12px 0;
+            font-size: 13px;
+        }
+
+        .resp .meta {
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--muted);
+            margin-bottom: 4px;
+        }
+
+        .resp .score {
+            color: var(--amber);
+        }
+
+        .empty {
+            color: var(--muted);
+            font-size: 13px;
+            font-family: var(--mono);
+            text-align: center;
+            padding: 10px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrap">
+
+        <div class="term" id="formCard">
+            <div class="term-bar">
+                <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+                <span class="term-path">promptwars://feedback</span>
+            </div>
+            <div class="term-body">
+                <div class="eyebrow">owasp x google</div>
+                <h1>PromptWars Feedback<span class="cursor"></span></h1>
+                <p class="sub">Tell us how the hackathon went. Takes under a minute — your input shapes the next
+                    edition.</p>
+
+                <form id="fbForm">
+                    <label>Name <span class="req">*</span></label>
+                    <input type="text" id="name" placeholder="Full name" required>
+
+                    <label>Roll number <span class="req">*</span></label>
+                    <input type="text" id="roll" placeholder="e.g. 21CS1042" required>
+
+                    <label>Email ID <span class="req">*</span> <span class="hint">(@thapar.edu only)</span></label>
+                    <input type="email" id="email" placeholder="yourname@thapar.edu" required>
+                    <div class="field-err" id="emailErr">Please use your @thapar.edu email address.</div>
+
+                    <label>Overall rating (1 = poor, 10 = excellent) <span class="req">*</span></label>
+                    <div class="scale-row" id="scaleRow"></div>
+                    <div class="scale-caps"><span>1 · poor</span><span>10 · excellent</span></div>
+
+                    <label>Feedback, in your own words</label>
+                    <textarea id="feedback" placeholder="What stood out, what could be better..."></textarea>
+
+                    <div class="err" id="errMsg">Please fill in all required fields and pick a rating.</div>
+                    <button type="submit" class="btn" id="submitBtn">./submit_feedback</button>
+                </form>
+            </div>
+
+            <div class="success" id="successView">
+                <span class="tag">ACCESS GRANTED</span>
+                <h2>Feedback logged.</h2>
+                <p>Thanks for helping us make the next PromptWars sharper.</p>
+                <div class="code" id="confCode"></div>
+            </div>
+        </div>
+
+        <div class="foot">
+            <button id="toggleAdmin" type="button">organizer view →</button>
+        </div>
+
+        <div class="term admin" id="adminCard">
+            <div class="term-bar">
+                <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+                <span class="term-path">promptwars://feedback/summary</span>
+            </div>
+            <div class="term-body">
+                <div class="eyebrow">aggregate</div>
+                <h1 style="font-size:20px;">Response summary</h1>
+                
+                <div id="adminAuthSection" style="margin-bottom: 20px;">
+                    <label>Admin Key <span class="req">*</span></label>
+                    <div style="display:flex; gap:8px;">
+                        <input type="password" id="adminKeyInput" placeholder="Enter x-admin-key" style="margin-top:0;">
+                        <button type="button" class="btn" id="adminAuthBtn" style="margin-top:0; width:auto; white-space:nowrap; padding: 10px 18px;">./unlock</button>
+                    </div>
+                    <div class="err" id="adminErr" style="margin-top: 8px;"></div>
+                </div>
+
+                <div id="adminDataSection" style="display: none;">
+                    <div style="display: flex; justify-content: flex-end; margin-bottom: 12px;">
+                        <button type="button" id="refreshAdminBtn" style="background:none; border:1px solid var(--border); color:var(--text); padding:5px 12px; border-radius:4px; font-family:var(--mono); font-size:11px; cursor:pointer;">⟳ refresh data</button>
+                    </div>
+                    <div class="stat-row">
+                        <div class="stat">
+                            <div class="n" id="statCount">0</div>
+                            <div class="l">responses</div>
+                        </div>
+                        <div class="stat">
+                            <div class="n" id="statAvg">—</div>
+                            <div class="l">avg score /10</div>
+                        </div>
+                    </div>
+                    <label style="margin-top:4px;">Word feedback — most mentioned</label>
+                    <div class="cloud" id="wordCloud">
+                        <div class="empty">No text feedback yet.</div>
+                    </div>
+                    <label>All responses</label>
+                    <div class="resp-list" id="respList">
+                        <div class="empty">No responses yet.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // CONFIGURATION: Set your Render Backend URL here
+        // If your service name on Render is different, you can update this single variable.
+        const RENDER_BACKEND_URL = 'https://feedbackform-owasp.onrender.com';
+
+        const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:'
+            ? 'http://localhost:5000'
+            : RENDER_BACKEND_URL;
+
+        const scaleRow = document.getElementById('scaleRow');
+        for (let i = 1; i <= 10; i++) {
+            const wrap = document.createElement('div');
+            wrap.className = 'bubble';
+            wrap.innerHTML = `<input type="radio" name="rating" id="r${i}" value="${i}"> <label for="r${i}">${i}</label>`;
+            scaleRow.appendChild(wrap);
+        }
+
+        const form = document.getElementById('fbForm');
+        const errMsg = document.getElementById('errMsg');
+        const submitBtn = document.getElementById('submitBtn');
+        const emailInput = document.getElementById('email');
+        const emailErr = document.getElementById('emailErr');
+
+        const ALLOWED_DOMAIN = 'thapar.edu';
+
+        function isValidThaparEmail(value) {
+            const re = new RegExp('^[a-zA-Z0-9._%+-]+@' + ALLOWED_DOMAIN.replace('.', '\\.') + '$', 'i');
+            return re.test(value.trim());
+        }
+
+        emailInput.addEventListener('input', () => {
+            emailInput.classList.remove('invalid');
+            emailErr.style.display = 'none';
+        });
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const name = document.getElementById('name').value.trim();
+            const roll = document.getElementById('roll').value.trim();
+            const email = emailInput.value.trim();
+            const rating = form.querySelector('input[name="rating"]:checked');
+            const feedback = document.getElementById('feedback').value.trim();
+
+            if (!isValidThaparEmail(email)) {
+                emailInput.classList.add('invalid');
+                emailErr.style.display = 'block';
+                emailInput.focus();
+                return;
+            }
+
+            if (!name || !roll || !email || !rating) {
+                errMsg.textContent = 'Please fill in all required fields and pick a rating.';
+                errMsg.style.display = 'block';
+                return;
+            }
+            errMsg.style.display = 'none';
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'logging...';
+
+            const payload = {
+                name,
+                roll,
+                email,
+                rating: Number(rating.value),
+                feedback
+            };
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/feedback`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to submit feedback.');
+                }
+
+                document.getElementById('confCode').textContent = 'ref: ' + (data.ref || 'LOGGED_' + Date.now());
+                document.getElementById('fbForm').style.display = 'none';
+                document.getElementById('successView').style.display = 'block';
+            } catch (err) {
+                errMsg.textContent = err.message || 'Something went wrong saving your response. Please try again.';
+                errMsg.style.display = 'block';
+                submitBtn.disabled = false;
+                submitBtn.textContent = './submit_feedback';
+            }
+        });
+
+        // ---- organizer view ----
+        const STOPWORDS = new Set(['the', 'a', 'an', 'and', 'or', 'but', 'is', 'was', 'were', 'are', 'to', 'of', 'in', 'on', 'for', 'it', 'this', 'that', 'with', 'as', 'be', 'at', 'by', 'from', 'i', 'we', 'my', 'our', 'it\'s', 'so', 'very', 'really', 'all', 'had', 'has', 'have', 'not', 'no', 'but', 'more', 'good', 'great', 'nice', 'was', 'well', 'you', 'your', 'they', 'their', 'them', 'also', 'just', 'can', 'could', 'would', 'should', 'if', 'than', 'then', 'there', 'which', 'what', 'who', 'how', 'been', 'being', 'into', 'about', 'more', 'most', 'some', 'such', 'only', 'over', 'out', 'up', 'down', 'will', 'when']);
+
+        function buildCloud(texts) {
+            const counts = {};
+            texts.forEach(t => {
+                (t.toLowerCase().match(/[a-z']+/g) || []).forEach(w => {
+                    if (w.length < 3 || STOPWORDS.has(w)) return;
+                    counts[w] = (counts[w] || 0) + 1;
+                });
+            });
+            return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 25);
+        }
+
+        const adminKeyInput = document.getElementById('adminKeyInput');
+        const adminAuthBtn = document.getElementById('adminAuthBtn');
+        const adminErr = document.getElementById('adminErr');
+        const adminDataSection = document.getElementById('adminDataSection');
+        const refreshAdminBtn = document.getElementById('refreshAdminBtn');
+
+        let savedAdminKey = sessionStorage.getItem('pw_admin_key') || '';
+        if (savedAdminKey) {
+            adminKeyInput.value = savedAdminKey;
+        }
+
+        async function loadAdmin(keyToUse) {
+            const adminKey = keyToUse || adminKeyInput.value.trim();
+            if (!adminKey) {
+                adminErr.textContent = 'Please enter your Admin Key.';
+                adminErr.style.display = 'block';
+                return;
+            }
+
+            adminErr.style.display = 'none';
+            adminAuthBtn.disabled = true;
+            adminAuthBtn.textContent = 'verifying...';
+
+            const listEl = document.getElementById('respList');
+            const cloudEl = document.getElementById('wordCloud');
+
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/feedback`, {
+                    headers: {
+                        'x-admin-key': adminKey
+                    }
+                });
+
+                const json = await res.json();
+
+                if (!res.ok) {
+                    throw new Error(json.error || 'Failed to authenticate admin key.');
+                }
+
+                sessionStorage.setItem('pw_admin_key', adminKey);
+                adminDataSection.style.display = 'block';
+
+                const entries = json.data || [];
+
+                if (entries.length === 0) {
+                    document.getElementById('statCount').textContent = '0';
+                    document.getElementById('statAvg').textContent = '—';
+                    cloudEl.innerHTML = '<div class="empty">No text feedback yet.</div>';
+                    listEl.innerHTML = '<div class="empty">No responses yet.</div>';
+                    return;
+                }
+
+                document.getElementById('statCount').textContent = entries.length;
+                const avg = entries.reduce((s, e) => s + (e.rating || 0), 0) / (entries.length || 1);
+                document.getElementById('statAvg').textContent = avg.toFixed(1);
+
+                const words = buildCloud(entries.map(e => e.feedback || ''));
+                if (words.length === 0) {
+                    cloudEl.innerHTML = '<div class="empty">No text feedback yet.</div>';
+                } else {
+                    const max = words[0][1];
+                    cloudEl.innerHTML = words.map(([w, c]) => {
+                        const size = 12 + Math.round((c / max) * 14);
+                        const opacity = 0.55 + (c / max) * 0.45;
+                        return `<span style="font-size:${size}px; opacity:${opacity.toFixed(2)}">${w}</span>`;
+                    }).join('');
+                }
+
+                listEl.innerHTML = entries.map(e => {
+                    const dateStr = e.created_at ? new Date(e.created_at).toLocaleString() : '';
+                    return `
+                      <div class="resp">
+                        <div class="meta">${escapeHtml(e.name)} · ${escapeHtml(e.roll_number || e.roll)} · ${escapeHtml(e.email)} · <span class="score">${e.rating}/10</span> ${dateStr ? `· <span style="opacity:0.6">${dateStr}</span>` : ''}</div>
+                        <div>${e.feedback ? escapeHtml(e.feedback) : '<span style="color:var(--muted)">— no text feedback —</span>'}</div>
+                      </div>
+                    `;
+                }).join('');
+            } catch (err) {
+                adminErr.textContent = err.message || 'Could not load responses.';
+                adminErr.style.display = 'block';
+            } finally {
+                adminAuthBtn.disabled = false;
+                adminAuthBtn.textContent = './unlock';
+            }
+        }
+
+        adminAuthBtn.addEventListener('click', () => loadAdmin());
+        adminKeyInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                loadAdmin();
+            }
+        });
+        refreshAdminBtn.addEventListener('click', () => loadAdmin());
+
+        function escapeHtml(s) {
+            if (!s) return '';
+            const d = document.createElement('div');
+            d.textContent = s;
+            return d.innerHTML;
+        }
+
+        const adminCard = document.getElementById('adminCard');
+        const toggleBtn = document.getElementById('toggleAdmin');
+        let adminOpen = false;
+        toggleBtn.addEventListener('click', () => {
+            adminOpen = !adminOpen;
+            adminCard.style.display = adminOpen ? 'block' : 'none';
+            toggleBtn.textContent = adminOpen ? '← hide organizer view' : 'organizer view →';
+            if (adminOpen && sessionStorage.getItem('pw_admin_key')) {
+                loadAdmin(sessionStorage.getItem('pw_admin_key'));
+            }
+        });
+    </script>
+</body>
+
+</html>

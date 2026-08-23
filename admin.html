@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Organizer View — PromptWars Feedback</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap');
+
+        :root {
+            --bg: #0a0f14;
+            --panel: #111922;
+            --panel-2: #0d141b;
+            --border: #1f2c38;
+            --text: #dce6ef;
+            --muted: #6b7d8f;
+            --amber: #e8a33d;
+            --amber-dim: #8a6526;
+            --green: #4fd1a5;
+            --red: #e8615d;
+            --mono: 'IBM Plex Mono', 'SFMono-Regular', Menlo, Consolas, monospace;
+            --sans: 'Inter', -apple-system, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--sans);
+            min-height: 100vh;
+            padding: 32px 16px;
+            background-image:
+                linear-gradient(rgba(232, 163, 61, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(232, 163, 61, 0.03) 1px, transparent 1px);
+            background-size: 28px 28px;
+        }
+
+        .wrap {
+            max-width: 680px;
+            margin: 0 auto;
+        }
+
+        .term {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+        }
+
+        .term-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            background: var(--panel-2);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .dot.r {
+            background: #e8615d;
+        }
+
+        .dot.y {
+            background: #e8c33d;
+        }
+
+        .dot.g {
+            background: #4fd1a5;
+        }
+
+        .term-path {
+            margin-left: 8px;
+            font-family: var(--mono);
+            font-size: 12.5px;
+            color: var(--muted);
+        }
+
+        .term-body {
+            padding: 28px 26px 30px;
+        }
+
+        .eyebrow {
+            font-family: var(--mono);
+            font-size: 12px;
+            letter-spacing: 0.08em;
+            color: var(--amber);
+            text-transform: uppercase;
+        }
+
+        .eyebrow::before {
+            content: "$ ";
+            color: var(--amber-dim);
+        }
+
+        h1 {
+            font-family: var(--mono);
+            font-size: 24px;
+            font-weight: 700;
+            margin: 10px 0 16px;
+            color: #fff;
+            letter-spacing: -0.01em;
+        }
+
+        label {
+            display: block;
+            font-family: var(--mono);
+            font-size: 12px;
+            color: var(--muted);
+            margin: 16px 0 7px;
+            letter-spacing: 0.03em;
+        }
+
+        label .req {
+            color: var(--amber);
+        }
+
+        input[type="password"] {
+            width: 100%;
+            background: var(--panel-2);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            font-family: var(--sans);
+            font-size: 14.5px;
+            padding: 11px 13px;
+            outline: none;
+            transition: border-color .15s, box-shadow .15s;
+        }
+
+        input:focus {
+            border-color: var(--amber-dim);
+            box-shadow: 0 0 0 3px rgba(232, 163, 61, 0.12);
+        }
+
+        .btn {
+            padding: 11px 20px;
+            border: none;
+            border-radius: 6px;
+            background: var(--amber);
+            color: #1a1206;
+            font-family: var(--mono);
+            font-weight: 700;
+            font-size: 14px;
+            letter-spacing: 0.02em;
+            cursor: pointer;
+            transition: filter .12s, transform .06s;
+        }
+
+        .btn:hover {
+            filter: brightness(1.08);
+        }
+
+        .btn:active {
+            transform: scale(0.99);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .err {
+            color: var(--red);
+            font-family: var(--mono);
+            font-size: 12px;
+            margin-top: 8px;
+            display: none;
+        }
+
+        .stat-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 22px;
+        }
+
+        .stat {
+            flex: 1;
+            background: var(--panel-2);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .stat .n {
+            font-family: var(--mono);
+            font-size: 26px;
+            color: var(--amber);
+            font-weight: 700;
+        }
+
+        .stat .l {
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--muted);
+            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .cloud {
+            line-height: 2.1;
+            padding: 12px;
+            background: var(--panel-2);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        .cloud span {
+            color: var(--text);
+            margin-right: 12px;
+            font-family: var(--mono);
+        }
+
+        .resp-list {
+            margin-top: 10px;
+        }
+
+        .resp {
+            border-top: 1px solid var(--border);
+            padding: 14px 0;
+            font-size: 13.5px;
+        }
+
+        .resp .meta {
+            font-family: var(--mono);
+            font-size: 11.5px;
+            color: var(--muted);
+            margin-bottom: 6px;
+        }
+
+        .resp .score {
+            color: var(--amber);
+            font-weight: 600;
+        }
+
+        .empty {
+            color: var(--muted);
+            font-size: 13px;
+            font-family: var(--mono);
+            text-align: center;
+            padding: 14px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrap">
+
+        <div class="term">
+            <div class="term-bar">
+                <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+                <span class="term-path">promptwars://organizer/dashboard</span>
+            </div>
+            <div class="term-body">
+                <div class="eyebrow">owasp organizer access</div>
+                <h1>Organizer Feedback Dashboard</h1>
+
+                <div id="adminAuthSection">
+                    <label>Admin Key <span class="req">*</span></label>
+                    <div style="display:flex; gap:8px;">
+                        <input type="password" id="adminKeyInput" placeholder="Enter ADMIN_KEY...">
+                        <button type="button" class="btn" id="adminAuthBtn">./unlock</button>
+                    </div>
+                    <div class="err" id="adminErr"></div>
+                </div>
+
+                <div id="adminDataSection" style="display: none; margin-top: 24px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                        <span style="font-family: var(--mono); font-size: 12px; color: var(--green);">● Live Data</span>
+                        <button type="button" id="refreshAdminBtn" style="background:none; border:1px solid var(--border); color:var(--text); padding:6px 14px; border-radius:4px; font-family:var(--mono); font-size:11px; cursor:pointer;">⟳ refresh</button>
+                    </div>
+
+                    <div class="stat-row">
+                        <div class="stat">
+                            <div class="n" id="statCount">0</div>
+                            <div class="l">Total Submissions</div>
+                        </div>
+                        <div class="stat">
+                            <div class="n" id="statAvg">—</div>
+                            <div class="l">Average Score / 10</div>
+                        </div>
+                    </div>
+
+                    <label>Keyword Cloud (Most Mentioned)</label>
+                    <div class="cloud" id="wordCloud">
+                        <div class="empty">No text feedback yet.</div>
+                    </div>
+
+                    <label>All Submissions</label>
+                    <div class="resp-list" id="respList">
+                        <div class="empty">No responses yet.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // CONFIGURATION: Set your Render Backend URL here
+        const RENDER_BACKEND_URL = 'https://feedbackform-owasp.onrender.com';
+
+        const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:'
+            ? 'http://localhost:5000'
+            : RENDER_BACKEND_URL;
+
+        const STOPWORDS = new Set(['the', 'a', 'an', 'and', 'or', 'but', 'is', 'was', 'were', 'are', 'to', 'of', 'in', 'on', 'for', 'it', 'this', 'that', 'with', 'as', 'be', 'at', 'by', 'from', 'i', 'we', 'my', 'our', 'it\'s', 'so', 'very', 'really', 'all', 'had', 'has', 'have', 'not', 'no', 'but', 'more', 'good', 'great', 'nice', 'was', 'well', 'you', 'your', 'they', 'their', 'them', 'also', 'just', 'can', 'could', 'would', 'should', 'if', 'than', 'then', 'there', 'which', 'what', 'who', 'how', 'been', 'being', 'into', 'about', 'more', 'most', 'some', 'such', 'only', 'over', 'out', 'up', 'down', 'will', 'when']);
+
+        function buildCloud(texts) {
+            const counts = {};
+            texts.forEach(t => {
+                (t.toLowerCase().match(/[a-z']+/g) || []).forEach(w => {
+                    if (w.length < 3 || STOPWORDS.has(w)) return;
+                    counts[w] = (counts[w] || 0) + 1;
+                });
+            });
+            return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 25);
+        }
+
+        const adminKeyInput = document.getElementById('adminKeyInput');
+        const adminAuthBtn = document.getElementById('adminAuthBtn');
+        const adminErr = document.getElementById('adminErr');
+        const adminDataSection = document.getElementById('adminDataSection');
+        const refreshAdminBtn = document.getElementById('refreshAdminBtn');
+
+        let savedAdminKey = sessionStorage.getItem('pw_admin_key') || '';
+        if (savedAdminKey) {
+            adminKeyInput.value = savedAdminKey;
+            loadAdmin(savedAdminKey);
+        }
+
+        async function loadAdmin(keyToUse) {
+            const adminKey = keyToUse || adminKeyInput.value.trim();
+            if (!adminKey) {
+                adminErr.textContent = 'Please enter your Admin Key.';
+                adminErr.style.display = 'block';
+                return;
+            }
+
+            adminErr.style.display = 'none';
+            adminAuthBtn.disabled = true;
+            adminAuthBtn.textContent = 'verifying...';
+
+            const listEl = document.getElementById('respList');
+            const cloudEl = document.getElementById('wordCloud');
+
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/feedback`, {
+                    headers: {
+                        'x-admin-key': adminKey
+                    }
+                });
+
+                const json = await res.json();
+
+                if (!res.ok) {
+                    throw new Error(json.error || 'Failed to authenticate admin key.');
+                }
+
+                sessionStorage.setItem('pw_admin_key', adminKey);
+                adminDataSection.style.display = 'block';
+
+                const entries = json.data || [];
+
+                if (entries.length === 0) {
+                    document.getElementById('statCount').textContent = '0';
+                    document.getElementById('statAvg').textContent = '—';
+                    cloudEl.innerHTML = '<div class="empty">No text feedback yet.</div>';
+                    listEl.innerHTML = '<div class="empty">No responses yet.</div>';
+                    return;
+                }
+
+                document.getElementById('statCount').textContent = entries.length;
+                const avg = entries.reduce((s, e) => s + (e.rating || 0), 0) / (entries.length || 1);
+                document.getElementById('statAvg').textContent = avg.toFixed(1);
+
+                const words = buildCloud(entries.map(e => e.feedback || ''));
+                if (words.length === 0) {
+                    cloudEl.innerHTML = '<div class="empty">No text feedback yet.</div>';
+                } else {
+                    const max = words[0][1];
+                    cloudEl.innerHTML = words.map(([w, c]) => {
+                        const size = 12 + Math.round((c / max) * 14);
+                        const opacity = 0.55 + (c / max) * 0.45;
+                        return `<span style="font-size:${size}px; opacity:${opacity.toFixed(2)}">${w}</span>`;
+                    }).join('');
+                }
+
+                listEl.innerHTML = entries.map(e => {
+                    const dateStr = e.created_at ? new Date(e.created_at).toLocaleString() : '';
+                    return `
+                      <div class="resp">
+                        <div class="meta">${escapeHtml(e.name)} · ${escapeHtml(e.roll_number || e.roll)} · ${escapeHtml(e.email)} · <span class="score">${e.rating}/10</span> ${dateStr ? `· <span style="opacity:0.6">${dateStr}</span>` : ''}</div>
+                        <div>${e.feedback ? escapeHtml(e.feedback) : '<span style="color:var(--muted)">— no text feedback —</span>'}</div>
+                      </div>
+                    `;
+                }).join('');
+            } catch (err) {
+                adminErr.textContent = err.message || 'Could not load responses.';
+                adminErr.style.display = 'block';
+            } finally {
+                adminAuthBtn.disabled = false;
+                adminAuthBtn.textContent = './unlock';
+            }
+        }
+
+        adminAuthBtn.addEventListener('click', () => loadAdmin());
+        adminKeyInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                loadAdmin();
+            }
+        });
+        refreshAdminBtn.addEventListener('click', () => loadAdmin());
+
+        function escapeHtml(s) {
+            if (!s) return '';
+            const d = document.createElement('div');
+            d.textContent = s;
+            return d.innerHTML;
+        }
+    </script>
+</body>
+
+</html>

@@ -3,12 +3,12 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const supabaseUrl = process.env.SUPABASE_URL || "";
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+const supabaseUrl = process.env.SUPABASE_URL || "https://placeholder-project.supabase.co";
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "placeholder-service-key";
 
-if (!supabaseUrl || !supabaseServiceRoleKey) {
+if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
   console.warn(
-    "[WARN] SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is missing from environment variables."
+    "⚠️ [WARN] SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is missing. Please set these in your .env file or Render dashboard."
   );
 }
 

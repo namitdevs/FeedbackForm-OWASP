@@ -493,23 +493,38 @@
             <div class="term-body">
                 <div class="eyebrow">aggregate</div>
                 <h1 style="font-size:20px;">Response summary</h1>
-                <div class="stat-row">
-                    <div class="stat">
-                        <div class="n" id="statCount">0</div>
-                        <div class="l">responses</div>
+                
+                <div id="adminAuthSection" style="margin-bottom: 20px;">
+                    <label>Admin Key <span class="req">*</span></label>
+                    <div style="display:flex; gap:8px;">
+                        <input type="password" id="adminKeyInput" placeholder="Enter x-admin-key" style="margin-top:0;">
+                        <button type="button" class="btn" id="adminAuthBtn" style="margin-top:0; width:auto; white-space:nowrap; padding: 10px 18px;">./unlock</button>
                     </div>
-                    <div class="stat">
-                        <div class="n" id="statAvg">—</div>
-                        <div class="l">avg score /10</div>
+                    <div class="err" id="adminErr" style="margin-top: 8px;"></div>
+                </div>
+
+                <div id="adminDataSection" style="display: none;">
+                    <div style="display: flex; justify-content: flex-end; margin-bottom: 12px;">
+                        <button type="button" id="refreshAdminBtn" style="background:none; border:1px solid var(--border); color:var(--text); padding:5px 12px; border-radius:4px; font-family:var(--mono); font-size:11px; cursor:pointer;">⟳ refresh data</button>
                     </div>
-                </div>
-                <label style="margin-top:4px;">Word feedback — most mentioned</label>
-                <div class="cloud" id="wordCloud">
-                    <div class="empty">No text feedback yet.</div>
-                </div>
-                <label>All responses</label>
-                <div class="resp-list" id="respList">
-                    <div class="empty">No responses yet.</div>
+                    <div class="stat-row">
+                        <div class="stat">
+                            <div class="n" id="statCount">0</div>
+                            <div class="l">responses</div>
+                        </div>
+                        <div class="stat">
+                            <div class="n" id="statAvg">—</div>
+                            <div class="l">avg score /10</div>
+                        </div>
+                    </div>
+                    <label style="margin-top:4px;">Word feedback — most mentioned</label>
+                    <div class="cloud" id="wordCloud">
+                        <div class="empty">No text feedback yet.</div>
+                    </div>
+                    <label>All responses</label>
+                    <div class="resp-list" id="respList">
+                        <div class="empty">No responses yet.</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -517,6 +532,13 @@
     </div>
 
     <script>
+        // CONFIGURATION: Set your backend API URL here.
+        // In local development, it defaults to http://localhost:5000.
+        // After deploying to Render, you can replace this with: 'https://your-backend.onrender.com'
+        const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:'
+            ? 'http://localhost:5000'
+            : '';
+
         const scaleRow = document.getElementById('scaleRow');
         for (let i = 1; i <= 10; i++) {
             const wrap = document.createElement('div');
@@ -534,7 +556,7 @@
         const ALLOWED_DOMAIN = 'thapar.edu';
 
         function isValidThaparEmail(value) {
-            const re = new RegExp('^[a-zA-Z0-9._%+-]+@' + ALLOWED_DOMAIN.replace('.', '\\.') + '$');
+            const re = new RegExp('^[a-zA-Z0-9._%+-]+@' + ALLOWED_DOMAIN.replace('.', '\\.') + '$', 'i');
             return re.test(value.trim());
         }
 
@@ -560,6 +582,7 @@
             }
 
             if (!name || !roll || !email || !rating) {
+                errMsg.textContent = 'Please fill in all required fields and pick a rating.';
                 errMsg.style.display = 'block';
                 return;
             }
@@ -568,17 +591,34 @@
             submitBtn.disabled = true;
             submitBtn.textContent = 'logging...';
 
-            const entry = { name, roll, email, rating: Number(rating.value), feedback, ts: Date.now() };
-            const key = 'response:' + Date.now() + ':' + Math.random().toString(36).slice(2, 8);
+            const payload = {
+                name,
+                roll,
+                email,
+                rating: Number(rating.value),
+                feedback
+            };
 
             try {
-                const res = await window.storage.set(key, JSON.stringify(entry), true);
-                if (!res) { throw new Error('save failed'); }
-                document.getElementById('confCode').textContent = 'ref: ' + key;
+                const response = await fetch(`${API_BASE_URL}/api/feedback`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to submit feedback.');
+                }
+
+                document.getElementById('confCode').textContent = 'ref: ' + (data.ref || 'LOGGED_' + Date.now());
                 document.getElementById('fbForm').style.display = 'none';
                 document.getElementById('successView').style.display = 'block';
             } catch (err) {
-                errMsg.textContent = 'Something went wrong saving your response. Please try again.';
+                errMsg.textContent = err.message || 'Something went wrong saving your response. Please try again.';
                 errMsg.style.display = 'block';
                 submitBtn.disabled = false;
                 submitBtn.textContent = './submit_feedback';
@@ -599,25 +639,57 @@
             return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 25);
         }
 
-        async function loadAdmin() {
+        const adminKeyInput = document.getElementById('adminKeyInput');
+        const adminAuthBtn = document.getElementById('adminAuthBtn');
+        const adminErr = document.getElementById('adminErr');
+        const adminDataSection = document.getElementById('adminDataSection');
+        const refreshAdminBtn = document.getElementById('refreshAdminBtn');
+
+        let savedAdminKey = sessionStorage.getItem('pw_admin_key') || '';
+        if (savedAdminKey) {
+            adminKeyInput.value = savedAdminKey;
+        }
+
+        async function loadAdmin(keyToUse) {
+            const adminKey = keyToUse || adminKeyInput.value.trim();
+            if (!adminKey) {
+                adminErr.textContent = 'Please enter your Admin Key.';
+                adminErr.style.display = 'block';
+                return;
+            }
+
+            adminErr.style.display = 'none';
+            adminAuthBtn.disabled = true;
+            adminAuthBtn.textContent = 'verifying...';
+
             const listEl = document.getElementById('respList');
             const cloudEl = document.getElementById('wordCloud');
+
             try {
-                const listing = await window.storage.list('response:', true);
-                const keys = (listing && listing.keys) || [];
-                if (keys.length === 0) {
+                const res = await fetch(`${API_BASE_URL}/api/feedback`, {
+                    headers: {
+                        'x-admin-key': adminKey
+                    }
+                });
+
+                const json = await res.json();
+
+                if (!res.ok) {
+                    throw new Error(json.error || 'Failed to authenticate admin key.');
+                }
+
+                sessionStorage.setItem('pw_admin_key', adminKey);
+                adminDataSection.style.display = 'block';
+
+                const entries = json.data || [];
+
+                if (entries.length === 0) {
                     document.getElementById('statCount').textContent = '0';
                     document.getElementById('statAvg').textContent = '—';
+                    cloudEl.innerHTML = '<div class="empty">No text feedback yet.</div>';
+                    listEl.innerHTML = '<div class="empty">No responses yet.</div>';
                     return;
                 }
-                const entries = [];
-                for (const k of keys) {
-                    try {
-                        const r = await window.storage.get(k, true);
-                        if (r && r.value) entries.push(JSON.parse(r.value));
-                    } catch (e) { /* skip missing */ }
-                }
-                entries.sort((a, b) => b.ts - a.ts);
 
                 document.getElementById('statCount').textContent = entries.length;
                 const avg = entries.reduce((s, e) => s + (e.rating || 0), 0) / (entries.length || 1);
@@ -635,18 +707,35 @@
                     }).join('');
                 }
 
-                listEl.innerHTML = entries.map(e => `
-      <div class="resp">
-        <div class="meta">${escapeHtml(e.name)} · ${escapeHtml(e.roll)} · <span class="score">${e.rating}/10</span></div>
-        <div>${e.feedback ? escapeHtml(e.feedback) : '<span style="color:var(--muted)">— no text feedback —</span>'}</div>
-      </div>
-    `).join('');
+                listEl.innerHTML = entries.map(e => {
+                    const dateStr = e.created_at ? new Date(e.created_at).toLocaleString() : '';
+                    return `
+                      <div class="resp">
+                        <div class="meta">${escapeHtml(e.name)} · ${escapeHtml(e.roll_number || e.roll)} · ${escapeHtml(e.email)} · <span class="score">${e.rating}/10</span> ${dateStr ? `· <span style="opacity:0.6">${dateStr}</span>` : ''}</div>
+                        <div>${e.feedback ? escapeHtml(e.feedback) : '<span style="color:var(--muted)">— no text feedback —</span>'}</div>
+                      </div>
+                    `;
+                }).join('');
             } catch (err) {
-                listEl.innerHTML = '<div class="empty">Could not load responses.</div>';
+                adminErr.textContent = err.message || 'Could not load responses.';
+                adminErr.style.display = 'block';
+            } finally {
+                adminAuthBtn.disabled = false;
+                adminAuthBtn.textContent = './unlock';
             }
         }
 
+        adminAuthBtn.addEventListener('click', () => loadAdmin());
+        adminKeyInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                loadAdmin();
+            }
+        });
+        refreshAdminBtn.addEventListener('click', () => loadAdmin());
+
         function escapeHtml(s) {
+            if (!s) return '';
             const d = document.createElement('div');
             d.textContent = s;
             return d.innerHTML;
@@ -659,7 +748,9 @@
             adminOpen = !adminOpen;
             adminCard.style.display = adminOpen ? 'block' : 'none';
             toggleBtn.textContent = adminOpen ? '← hide organizer view' : 'organizer view →';
-            if (adminOpen) loadAdmin();
+            if (adminOpen && sessionStorage.getItem('pw_admin_key')) {
+                loadAdmin(sessionStorage.getItem('pw_admin_key'));
+            }
         });
     </script>
 </body>
